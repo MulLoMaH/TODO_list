@@ -83,4 +83,6 @@ migrate_action:
 	-database postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@todoapp-postgres:5432/$(POSTGRES_DB)?sslmode=disable \
 	"$(action)"
 
-#
+#операция по запуску приложения
+todoapp_run:
+	@go run cmd/todoapp/main.go
