@@ -1,0 +1,41 @@
+services:
+#сервис базы данных 
+  todoapp-postgres:
+    #указываем образ для базы данных с docker hub
+    image: postgres:18.1-bookworm
+   
+    #явно задаем имя для контейнера
+    container_name: todoapp-env-postgres
+
+    #задаем переменные окружения для базы данных 
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER} #название пользователя базы данных внутри docker container 
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD} #пароль от базы данных внутри docker container
+      - POSTGRES_DB=${POSTGRES_DB} #логический подраздел на уровне базы данных создаваемый внутри докер контейнера
+    
+    #Пробрасываем данные на локальную машину
+    volumes:
+    #передаем актуальный полный путь в базу данных через переменную окружения
+      - ${PROJECT_ROOT}/out/pgdata:/var/lib/postgresql
+    
+    #перезапуск сервиса в случае остановки
+    restart: always
+  
+#сервис миграций
+  todoapp-postgres-migrate:
+    #указываем образ для миграций с docker hub
+    image: migrate/migrate:v4.19.1
+    #пробрасываем миграции на локальную машину
+    volumes:
+      - ${PROJECT_ROOT}/migrations:/migrations
+
+#сервис для проброса порта с базы данных на локальную машину (передача трафика) (утилита socat)
+  port-forwarder:
+    image: alpine/socat:1.8.0.3
+    container_name: todoapp-postgres-port-forwarder
+    #указываем команду говорящую что этой утилите нужно поддерживать двунаправленное сетевое соединение 
+    #между собой и хостом todoapp-postgres
+    command: tcp-listen:5432,fork,reuseaddr tcp-connect:todoapp-postgres:5432
+    #пробрасываем порт себе на хост систему с утилиты с указанием адреса локального хоста для безопасности 
+    ports:
+      - "127.0.0.1:5432:5432"
