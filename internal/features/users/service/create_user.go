@@ -1,4 +1,4 @@
-package user_service
+package users_service
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 	"github.com/MulLoMaH/TODO_list.git/internal/core/domain"
 )
 
-func (s *UserService) CreateUser(
+func (s *UsersService) CreateUser(
 	ctx context.Context,
 	user domain.User,
 ) (domain.User, error) {

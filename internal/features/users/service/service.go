@@ -1,4 +1,4 @@
-package user_service
+package users_service
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 	"github.com/MulLoMaH/TODO_list.git/internal/core/domain"
 )
 
-type UserService struct {
+type UsersService struct {
 	userRepository UserRepository
 }
 
@@ -15,10 +15,16 @@ type UserRepository interface {
 		ctx context.Context,
 		user domain.User,
 	) (domain.User, error)
+
+	GetUsers(
+		ctx context.Context,
+		limit *int,
+		offser *int,
+	) ([]domain.User, error)
 }
 
-func NewUserService(userRepository UserRepository) *UserService {
-	return &UserService{
+func NewUserService(userRepository UserRepository) *UsersService {
+	return &UsersService{
 		userRepository: userRepository,
 	}
 }
