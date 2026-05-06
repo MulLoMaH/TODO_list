@@ -85,4 +85,7 @@ migrate_action:
 
 #операция по запуску приложения
 todoapp_run:
-	@go run cmd/todoapp/main.go
+	@export LOGGER_FOLDER="${PROJECT_ROOT}/out/logs" && \
+	export POSTGRES_HOST=localhost && \
+	go mod tidy && \
+	go run cmd/todoapp/main.go
