@@ -7,7 +7,7 @@ import (
 
 	"github.com/MulLoMaH/TODO_list.git/internal/core/domain"
 	core_errors "github.com/MulLoMaH/TODO_list.git/internal/core/errors"
-	"github.com/jackc/pgx/v5"
+	core_postgres_pool "github.com/MulLoMaH/TODO_list.git/internal/core/repository/postgres/pool"
 )
 
 func (r *UserRepository) GetUser(
@@ -20,7 +20,7 @@ func (r *UserRepository) GetUser(
 	query := `
 	SELECT id, version, full_name, phone_number
 	FROM todoapp.users
-	WHERE id=$1
+	WHERE id=$1;
 	`
 
 	row := r.pool.QueryRow(ctx, query, id)
@@ -33,7 +33,7 @@ func (r *UserRepository) GetUser(
 		&userModel.FullName,
 		&userModel.PhoneNumber,
 	); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
+		if errors.Is(err, core_postgres_pool.ErrNoRows) {
 			return domain.User{},
 				fmt.Errorf(
 					"user with id='%d': %w",
