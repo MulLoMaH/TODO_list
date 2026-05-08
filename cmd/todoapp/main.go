@@ -8,7 +8,7 @@ import (
 	"syscall"
 
 	core_logger "github.com/MulLoMaH/TODO_list.git/internal/core/logger"
-	core_postgres_pool "github.com/MulLoMaH/TODO_list.git/internal/core/repository/postgres/conn"
+	core_pgx_pool "github.com/MulLoMaH/TODO_list.git/internal/core/repository/postgres/pool/pgx"
 	core_http_middleware "github.com/MulLoMaH/TODO_list.git/internal/core/transport/http/middleware"
 	core_HTTP_server "github.com/MulLoMaH/TODO_list.git/internal/core/transport/http/server"
 	user_postgres_repository "github.com/MulLoMaH/TODO_list.git/internal/features/users/repository/postgres"
@@ -33,11 +33,15 @@ func main() {
 	defer logger.Close()
 
 	logger.Debug("initializing postges connection pool")
-	pool, err := core_postgres_pool.NewConnectionPool(
-		ctx,
-		core_postgres_pool.NewConfigMust(),
-	)
+	// pool, err := core_postgres_pool.NewConnectionPool(
+	// 	ctx,
+	// 	core_postgres_pool.NewConfigMust(),
+	// )
 
+	pool, err := core_pgx_pool.NewPool(
+		ctx,
+		core_pgx_pool.NewConfigMust(),
+	)
 	if err != nil {
 		logger.Fatal("failed to init  postgres connection pool", zap.Error(err))
 	}
@@ -55,13 +59,13 @@ func main() {
 		core_HTTP_server.NewConfigMust(),
 		core_http_middleware.RequestID(),
 		core_http_middleware.LoggerMiddleware(logger),
-		core_http_middleware.Panic(),
 		core_http_middleware.Trace(),
+		core_http_middleware.Panic(),
 	)
-	apiVersionRouter := core_HTTP_server.NewAPIVersionRouter(core_HTTP_server.ApiVersion1)
-	apiVersionRouter.RegisterRoutes(usersTransportHTTP.Routes()...)
+	apiVersionRouterV1 := core_HTTP_server.NewAPIVersionRouter(core_HTTP_server.ApiVersion1)
+	apiVersionRouterV1.RegisterRoutes(usersTransportHTTP.Routes()...)
 
-	httpServer.RegisterAPIRouters(apiVersionRouter)
+	httpServer.RegisterAPIRouters(apiVersionRouterV1)
 
 	if err := httpServer.Run(ctx); err != nil {
 		logger.Error("HTTP server run error", zap.Error(err))

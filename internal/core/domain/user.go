@@ -45,12 +45,12 @@ func NewUserUninitialized(
 
 func (u *User) Validate() error {
 	//проверка на количество символов в строке (русские буквы = 2 байта = 1 руна)
-	fullNameLenght := len([]rune(u.FullName))
+	fullNameLen := len([]rune(u.FullName))
 
-	if fullNameLenght < 3 || fullNameLenght > 100 {
+	if fullNameLen < 3 || fullNameLen > 100 {
 		return fmt.Errorf(
 			"invalid 'FullName' len: %d: %w",
-			fullNameLenght,
+			fullNameLen,
 			core_errors.ErrInvalidArgument,
 		)
 	}
@@ -81,6 +81,16 @@ func (u *User) Validate() error {
 type UserPatch struct {
 	FullName    Nullable[string]
 	PhoneNumber Nullable[string]
+}
+
+func NewUserPatch(
+	fullName Nullable[string],
+	phoneNumber Nullable[string],
+) UserPatch {
+	return UserPatch{
+		FullName:    fullName,
+		PhoneNumber: phoneNumber,
+	}
 }
 
 func (p *UserPatch) Validate() error {
