@@ -23,7 +23,7 @@ env-cleanup:
 # echo == println в golang, fi - обозначает конец условного ветвления на уровне shell
 	@read -p "Очистить все volume файлы окружения? Опасность утери данных. [y/N]: " ans; \
 	if [ "$$ans" = "y" ]; then \
-		docker compose down todoapp-postgres && \
+		docker compose down todoapp-postgres port-forwarder && \
 		rm -rf out/pgdata \
 		echo "Файлы окружения очищены"; \
 	else \
@@ -83,4 +83,9 @@ migrate_action:
 	-database postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@todoapp-postgres:5432/$(POSTGRES_DB)?sslmode=disable \
 	"$(action)"
 
-#
+#операция по запуску приложения
+todoapp_run:
+	@export LOGGER_FOLDER="${PROJECT_ROOT}/out/logs" && \
+	export POSTGRES_HOST=localhost && \
+	go mod tidy && \
+	go run cmd/todoapp/main.go
