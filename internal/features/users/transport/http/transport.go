@@ -1,4 +1,4 @@
-package user_transport_http
+package users_transport_http
 
 import (
 	"context"
@@ -23,6 +23,22 @@ type UsersService interface {
 		limit *int,
 		offset *int,
 	) ([]domain.User, error)
+
+	GetUser(
+		ctx context.Context,
+		id int,
+	) (domain.User, error)
+
+	DeleteUser(
+		ctx context.Context,
+		id int,
+	) error
+
+	PatchUser(
+		ctx context.Context,
+		id int,
+		patch domain.UserPatch,
+	) (domain.User, error)
 }
 
 func NewUserHTTPHandler(UsersService UsersService) *UserHTTPHandler {
@@ -42,6 +58,21 @@ func (h *UserHTTPHandler) Routes() []core_HTTP_server.Route {
 			Method:  http.MethodGet,
 			Path:    "/users",
 			Handler: h.GetUsers,
+		},
+		{
+			Method:  http.MethodGet,
+			Path:    "/users/{id}",
+			Handler: h.GetUser,
+		},
+		{
+			Method:  http.MethodDelete,
+			Path:    "/users/{id}",
+			Handler: h.DeleteUser,
+		},
+		{
+			Method:  http.MethodPatch,
+			Path:    "/users/{id}",
+			Handler: h.PatchUser,
 		},
 	}
 }
