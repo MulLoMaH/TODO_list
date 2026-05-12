@@ -18,6 +18,18 @@ type GetStatisticsResponse struct {
 	TasksAvarageCompletionTime *string  `json:"tasks_avarage_completion_time"`
 }
 
+// GetStatistics    godoc
+// @Summary         Получение статистики
+// @Discriotion     Получение статистики по задачам с опциональной фильтрацией по user_id и/или временному промежутку
+// @Tags            statistics
+// @Produce         json
+// @Param           user_id query int false "Фильтрация статистики по конкретному пользователю"
+// @Param           from query string false "Начало промежутка рассмотрения статистики (включительно) формат: YYYY-MM-DD"
+// @Param           to query string false  "Конец промежутка рассмотрения статистики (не включительно) формат: YYYY-MM-DD"
+// @Success         200 {object} GetStatisticsResponse "Успешное получение статистики"
+// @Failure 		400 {object} core_http_response.ErrorResponse "Bad request"
+// @Failure 		500 {object} core_http_response.ErrorResponse "Internal server error"
+// @Router          /statistics [get]
 func (h *StatisticsHTTPHandler) GetStatistics(rw http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := core_logger.FromContext(ctx)

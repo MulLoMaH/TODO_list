@@ -39,6 +39,18 @@ func (h *TasksHTTPHandler) GetTasks(rw http.ResponseWriter, r *http.Request) {
 	responseHandler.JSONResponse(response, http.StatusOK)
 }
 
+// GetTasks 		 	godoc
+// @Summary 			Список задач
+// @Description 		Просмотр списка задач с опциональной пагинацией и/или фильтрацией по ID автора
+// @Tags 				tasks
+// @Produce 			json
+// @Param               user_id query int false "Фильтрация задач по ID автора"
+// @Param  				limit query int false "Размер страницы с задачами"
+// @Param  				offset query int false "Смещение страницы с задачами"
+// @Success 			200 {object} internal_features_tasks_transport_http.TaskDTOResponse "Успешное получение списка пользователей"
+// @Failure 			400 {object} core_http_response.ErrorResponse "Bad request"
+// @Failure 			500 {object} core_http_response.ErrorResponse "Internal server error"
+// @Router 				/tasks [get]
 func getUserIDLimitOffsetQueryParams(r *http.Request) (*int, *int, *int, error) {
 	const (
 		userIDQueryParamKey = "user_id"
