@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <title>⚡ NEON TODO</title>
+    <style>
+        /* ===== CORE CSS ===== */
+        :root {
+            --bg-dark: #0a0a12;
+            --bg-sidebar: #0f0f1a;
+            --bg-card: #161625;
+            --bg-hover: #1e1e32;
+            --bg-input: #1a1a2e;
+            --border: #2a2a40;
+            --border-active: #00f3ff40;
+            --text-primary: #e8e8ff;
+            --text-secondary: #8888aa;
+            --text-muted: #555577;
+            --accent-cyan: #00f3ff;
+            --accent-pink: #ff00ea;
+            --accent-green: #00ff9d;
+            --accent-orange: #ff9e00;
+            --shadow: 0 4px 24px rgba(0,0,0,0.4);
+            --radius: 12px;
+            --radius-sm: 8px;
+            --radius-full: 999px;
+            --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            --sidebar-width: 260px;
+        }
+        
+        [data-theme="light"] {
+            --bg-dark: #f0f2f5; --bg-sidebar: #ffffff; --bg-card: #ffffff;
+            --bg-hover: #f5f5f8; --bg-input: #f0f0f5; --border: #e0e0e8;
+            --text-primary: #1a1a2e; --text-secondary: #555577; --text-muted: #8888aa;
+            --shadow: 0 4px 24px rgba(0,0,0,0.1);
+        }
+        
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: var(--font); background: var(--bg-dark); color: var(--text-primary);
+            min-height: 100vh; overflow-x: hidden; line-height: 1.5;
+        }
+        
+        /* ===== SCROLLBAR ===== */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent-cyan); }
+        
+        /* ===== LAYOUT ===== */
+        .app-layout { display: flex; min-height: 100vh; }
+        
+        .sidebar {
+            width: var(--sidebar-width); background: var(--bg-sidebar);
+            border-right: 1px solid var(--border); display: flex; flex-direction: column;
+            position: fixed; top: 0; left: 0; bottom: 0; z-index: 100; transition: var(--transition);
+        }
+        
+        .sidebar-logo {
+            padding: 1.5rem; display: flex; align-items: center; gap: 0.75rem;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .sidebar-logo .icon { font-size: 1.8rem; animation: pulse 2s infinite; }
+        .sidebar-logo .text {
+            font-size: 1.3rem; font-weight: 800;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-pink));
+            -webkit-background-clip: text; background-clip: text; color: transparent;
+        }
+        
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+        
+        /* ===== SIDEBAR USER ===== */
+        .sidebar-user { padding: 1rem 1.5rem; border-bottom: 1px solid var(--border); }
+        .sidebar-user label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.5rem; display: block; }
+        .user-select {
+            width: 100%; padding: 0.6rem 0.8rem; background: var(--bg-input);
+            border: 1px solid var(--border); border-radius: var(--radius-sm);
+            color: var(--text-primary); font-size: 0.9rem; cursor: pointer;
+            appearance: none;
+            background-image: url("image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238888aa' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: right 10px center;
+        }
+        .user-select:focus { outline: none; border-color: var(--accent-cyan); box-shadow: 0 0 0 2px var(--accent-cyan)30; }
+        
+        /* ===== NAV ===== */
+        .sidebar-nav { flex: 1; padding: 1rem 0; overflow-y: auto; }
+        .nav-section { padding: 0 1rem; margin-bottom: 1.5rem; }
+        .nav-section-title { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px; padding: 0 0.75rem; margin-bottom: 0.5rem; }
+        
+        .nav-item {
+            display: flex; align-items: center; gap: 0.75rem; padding: 0.7rem 0.75rem;
+            border-radius: var(--radius-sm); color: var(--text-secondary); cursor: pointer;
+            transition: var(--transition); font-size: 0.95rem; font-weight: 500;
+            border: none; background: none; width: 100%; text-align: left;
+        }
+        .nav-item:hover { background: var(--bg-hover); color: var(--text-primary); }
+        .nav-item.active { background: var(--accent-cyan)15; color: var(--accent-cyan); box-shadow: inset 3px 0 0 var(--accent-cyan); }
+        .nav-item .icon { font-size: 1.2rem; width: 24px; text-align: center; }
+        .nav-item .badge {
+            margin-left: auto; background: var(--accent-pink); color: white;
+            font-size: 0.7rem; padding: 0.15rem 0.5rem; border-radius: var(--radius-full); font-weight: 700;
+        }
+        
+        .sidebar-footer {
+            padding: 1rem 1.5rem; border-top: 1px solid var(--border);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .sidebar-footer .status { font-size: 0.75rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.4rem; }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent-green); box-shadow: 0 0 6px var(--accent-green); }
+        .status-dot.offline { background: var(--accent-orange); box-shadow: 0 0 6px var(--accent-orange); }
+        .theme-btn {
+            width: 36px; height: 36px; border-radius: var(--radius-full); border: 1px solid var(--border);
+            background: var(--bg-input); color: var(--text-secondary); cursor: pointer;
+            font-size: 1rem; display: flex; align-items: center; justify-content: center; transition: var(--transition);
+        }
+        .theme-btn:hover { border-color: var(--accent-cyan); color: var(--accent-cyan); }
+        
+        /* ===== MAIN CONTENT ===== */
+        .main-content { flex: 1; margin-left: var(--sidebar-width); display: flex; flex-direction: column; min-height: 100vh; }
+        
+        .top-bar {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 1rem 2rem; border-bottom: 1px solid var(--border); background: var(--bg-sidebar);
+            position: sticky; top: 0; z-index: 50;
+        }
+        .top-bar h1 { font-size: 1.4rem; font-weight: 700; }
+        .top-bar-actions { display: flex; gap: 0.75rem; align-items: center; }
+        .search-input {
+            padding: 0.5rem 1rem 0.5rem 2.5rem; background: var(--bg-input);
+            border: 1px solid var(--border); border-radius: var(--radius-full);
+            color: var(--text-primary); font-size: 0.9rem; width: 250px; transition: var(--transition);
+        }
+        .search-input:focus { outline: none; border-color: var(--accent-cyan); box-shadow: 0 0 0 3px var(--accent-cyan)20; width: 300px; }
+        .search-wrapper { position: relative; }
+        .search-wrapper::before { content: '🔍'; position: absolute; left: 10px; top: 50%; transform: translateY(-50%); font-size: 0.85rem; pointer-events: none; }
+        
+        .page-content { flex: 1; padding: 2rem; max-width: 900px; width: 100%; margin: 0 auto; }
+        .page-section { display: none; animation: fadeIn 0.3s ease; }
+        .page-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* ===== FORMS & BUTTONS ===== */
+        .btn {
+            display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.2rem;
+            border: none; border-radius: var(--radius-sm); font-weight: 600; font-size: 0.9rem;
+            cursor: pointer; transition: var(--transition); text-decoration: none; white-space: nowrap;
+        }
+        .btn-primary { background: linear-gradient(135deg, var(--accent-cyan), #00a8ff); color: #000; }
+        .btn-primary:hover { box-shadow: 0 0 20px rgba(0,243,255,0.4); transform: translateY(-1px); }
+        .btn-success { background: linear-gradient(135deg, var(--accent-green), #00cc7d); color: #000; }
+        .btn-danger { background: linear-gradient(135deg, var(--accent-pink), #cc00b8); color: #fff; }
+        .btn-ghost { background: transparent; color: var(--text-secondary); border: 1px solid var(--border); }
+        .btn-ghost:hover { background: var(--bg-hover); color: var(--text-primary); border-color: var(--accent-cyan); }
+        .btn-sm { padding: 0.4rem 0.8rem; font-size: 0.8rem; }
+        .btn-lg { padding: 0.8rem 1.5rem; font-size: 1rem; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+        
+        .form-group { display: flex; flex-direction: column; gap: 0.3rem; margin-bottom: 0.75rem; }
+        .form-group label { font-size: 0.8rem; color: var(--text-muted); font-weight: 500; }
+        .form-input, .form-select, .form-textarea {
+            padding: 0.6rem 0.8rem; background: var(--bg-input); border: 1px solid var(--border);
+            border-radius: var(--radius-sm); color: var(--text-primary); font-size: 0.9rem;
+            transition: var(--transition); font-family: var(--font); width: 100%;
+        }
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none; border-color: var(--accent-cyan); box-shadow: 0 0 0 2px var(--accent-cyan)20;
+        }
+        .form-textarea { resize: vertical; min-height: 80px; }
+        .form-select {
+            appearance: none;
+            background-image: url("image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238888aa' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: right 10px center; padding-right: 30px;
+        }
+        .form-error { font-size: 0.75rem; color: var(--accent-pink); display: none; margin-top: 0.2rem; }
+        .form-input.error { border-color: var(--accent-pink); }
+        .form-input.error + .form-error { display: block; }
+        
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+        @media (max-width: 600px) { .form-row { grid-template-columns: 1fr; } }
+        
+        /* ===== CARD STYLES ===== */
+        .create-task-bar {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 1.25rem; margin-bottom: 1.5rem;
+        }
+        
+        .task-feed { display: flex; flex-direction: column; gap: 0.75rem; }
+        .task-card {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 1.25rem; transition: var(--transition);
+            position: relative; overflow: hidden; animation: slideIn 0.3s ease forwards;
+        }
+        .task-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--accent-cyan); opacity: 0; transition: var(--transition); }
+        .task-card:hover { border-color: var(--border-active); transform: translateX(4px); }
+        .task-card:hover::before { opacity: 1; }
+        .task-card.completed { opacity: 0.6; }
+        .task-card.completed::before { background: var(--accent-green); opacity: 1; }
+        
+        .task-header { display: flex; align-items: flex-start; gap: 1rem; }
+        .task-checkbox { flex-shrink: 0; margin-top: 2px; }
+        .task-checkbox input[type="checkbox"] { display: none; }
+        .task-checkbox label {
+            display: flex; align-items: center; justify-content: center;
+            width: 24px; height: 24px; border-radius: 6px; border: 2px solid var(--border);
+            cursor: pointer; transition: var(--transition); font-size: 0.8rem;
+        }
+        .task-checkbox input:checked + label { background: var(--accent-green); border-color: var(--accent-green); box-shadow: 0 0 10px var(--accent-green)40; }
+        .task-checkbox input:checked + label::after { content: '✓'; color: #000; font-weight: bold; }
+        
+        .task-body { flex: 1; min-width: 0; }
+        .task-title { font-weight: 600; font-size: 1rem; margin-bottom: 0.3rem; transition: var(--transition); }
+        .task-card.completed .task-title { text-decoration: line-through; color: var(--text-muted); }
+        .task-description { font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem; }
+        .task-meta { display: flex; gap: 1rem; font-size: 0.75rem; color: var(--text-muted); flex-wrap: wrap; }
+        .task-meta span { display: inline-flex; align-items: center; gap: 0.3rem; }
+        .task-status-badge { padding: 0.15rem 0.6rem; border-radius: var(--radius-full); font-size: 0.7rem; font-weight: 600; text-transform: uppercase; }
+        .task-status-badge.done { background: var(--accent-green)20; color: var(--accent-green); }
+        .task-status-badge.pending { background: var(--accent-orange)20; color: var(--accent-orange); }
+        
+        .task-actions { display: flex; gap: 0.4rem; opacity: 0; transition: var(--transition); }
+        .task-card:hover .task-actions { opacity: 1; }
+        
+        .action-btn {
+            width: 32px; height: 32px; border-radius: var(--radius-sm); border: none;
+            background: var(--bg-hover); color: var(--text-secondary); cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: var(--transition); font-size: 0.9rem;
+        }
+        .action-btn:hover { background: var(--accent-cyan)20; color: var(--accent-cyan); }
+        .action-btn.delete:hover { background: var(--accent-pink)20; color: var(--accent-pink); }
+        
+        /* ===== USER LIST ===== */
+        .user-list { display: flex; flex-direction: column; gap: 0.5rem; }
+        .user-card {
+            display: flex; align-items: center; gap: 1rem; padding: 1rem;
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: var(--radius); transition: var(--transition);
+        }
+        .user-card:hover { border-color: var(--border-active); transform: translateX(4px); }
+        .user-avatar {
+            width: 48px; height: 48px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-pink));
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; color: #000; font-size: 1.1rem; flex-shrink: 0;
+        }
+        .user-info { flex: 1; min-width: 0; }
+        .user-name { font-weight: 600; margin-bottom: 0.2rem; }
+        .user-phone { font-size: 0.85rem; color: var(--text-secondary); }
+        .user-id { font-size: 0.75rem; color: var(--text-muted); }
+        
+        /* ===== STATS ===== */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+        .stat-card {
+            background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+            padding: 1.25rem; text-align: center; transition: var(--transition); position: relative; overflow: hidden;
+        }
+        .stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--accent-cyan), var(--accent-pink)); opacity: 0; transition: var(--transition); }
+        .stat-card:hover { transform: translateY(-3px); border-color: var(--border-active); }
+        .stat-card:hover::before { opacity: 1; }
+        .stat-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+        .stat-value { font-size: 2rem; font-weight: 800; background: linear-gradient(135deg, var(--accent-cyan), var(--accent-pink)); -webkit-background-clip: text; background-clip: text; color: transparent; line-height: 1; }
+        .stat-label { font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.3rem; }
+        .progress-bar { height: 6px; background: var(--bg-input); border-radius: var(--radius-full); overflow: hidden; margin-top: 0.5rem; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent-cyan), var(--accent-green)); border-radius: var(--radius-full); transition: width 0.6s ease; }
+        
+        /* ===== MISC ===== */
+        .empty-state { text-align: center; padding: 3rem 1rem; color: var(--text-muted); }
+        .empty-state .icon { font-size: 3rem; margin-bottom: 1rem; opacity: 0.5; }
+        .empty-state h3 { color: var(--text-secondary); margin-bottom: 0.5rem; }
+        .loading { text-align: center; padding: 2rem; color: var(--text-muted); }
+        .loading-spinner { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--accent-cyan); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 1rem; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .task-card { animation: slideIn 0.3s ease forwards; }
+        
+        .pagination { display: flex; justify-content: center; align-items: center; gap: 0.3rem; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+        .page-btn { min-width: 34px; height: 34px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: transparent; color: var(--text-secondary); cursor: pointer; transition: var(--transition); font-size: 0.85rem; }
+        .page-btn:hover:not(:disabled) { background: var(--bg-hover); color: var(--text-primary); border-color: var(--accent-cyan); }
+        .page-btn.active { background: var(--accent-cyan); color: #000; border-color: var(--accent-cyan); font-weight: 700; }
+        .page-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+        .page-info { font-size: 0.8rem; color: var(--text-muted); margin: 0 0.5rem; }
+        
+        #toast-container { position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 300; display: flex; flex-direction: column; gap: 0.5rem; max-width: 360px; }
+        .toast { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0.75rem 1rem; display: flex; align-items: flex-start; gap: 0.75rem; box-shadow: var(--shadow); transform: translateX(120%); transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        .toast.show { transform: translateX(0); }
+        .toast.success { border-left: 3px solid var(--accent-green); }
+        .toast.error { border-left: 3px solid var(--accent-pink); }
+        .toast.info { border-left: 3px solid var(--accent-cyan); }
+        .toast-icon { font-size: 1.2rem; margin-top: 2px; }
+        .toast-content { flex: 1; }
+        .toast-title { font-weight: 600; font-size: 0.9rem; }
+        .toast-message { font-size: 0.8rem; color: var(--text-secondary); }
+        
+        .mobile-toggle { display: none; width: 40px; height: 40px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary); cursor: pointer; align-items: center; justify-content: center; font-size: 1.2rem; }
+        .mobile-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 99; }
+        .mobile-overlay.show { display: block; }
+        
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); box-shadow: var(--shadow); }
+            .main-content { margin-left: 0; }
+            .mobile-toggle { display: flex !important; }
+            .page-content { padding: 1rem; }
+            .search-input { width: 150px; }
+            .search-input:focus { width: 180px; }
+        }
+        @media (max-width: 600px) {
+            .top-bar { padding: 0.75rem 1rem; }
+            .search-wrapper { display: none; }
+            .task-actions { opacity: 1; }
+            .task-meta { flex-direction: column; gap: 0.3rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="mobile-overlay" id="mobile-overlay" onclick="App.toggleSidebar()"></div>
+    
+    <div class="app-layout">
+        <!-- ===== SIDEBAR ===== -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-logo">
+                <span class="icon">⚡</span>
+                <span class="text">NEON TODO</span>
+            </div>
+            
+            <div class="sidebar-user">
+                <label>Текущий пользователь</label>
+                <select id="sidebar-user-select" class="user-select">
+                    <option value="">Все пользователи</option>
+                </select>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">Основное</div>
+                    <button class="nav-item active" data-page="tasks" onclick="App.navigate('tasks')">
+                        <span class="icon">📝</span> Задачи <span class="badge" id="nav-task-count">0</span>
+                    </button>
+                    <button class="nav-item" data-page="create" onclick="App.navigate('create')">
+                        <span class="icon">➕</span> Создать задачу
+                    </button>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Управление</div>
+                    <button class="nav-item" data-page="users" onclick="App.navigate('users')">
+                        <span class="icon">👥</span> Пользователи
+                    </button>
+                    <button class="nav-item" data-page="stats" onclick="App.navigate('stats')">
+                        <span class="icon">📊</span> Статистика
+                    </button>
+                </div>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="status">
+                    <span class="status-dot" id="status-dot"></span>
+                    <span id="status-text">Онлайн</span>
+                </div>
+                <button class="theme-btn" onclick="App.toggleTheme()" title="Переключить тему">🌙</button>
+            </div>
+        </aside>
+        
+        <!-- ===== MAIN CONTENT ===== -->
+        <div class="main-content">
+            <header class="top-bar">
+                <div class="flex items-center gap-3">
+                    <button class="mobile-toggle" onclick="App.toggleSidebar()">☰</button>
+                    <h1 id="page-title">📝 Задачи</h1>
+                </div>
+                <div class="top-bar-actions">
+                    <div class="search-wrapper">
+                        <input type="search" id="global-search" class="search-input" placeholder="Поиск задач...">
+                    </div>
+                    <button class="btn btn-primary btn-sm" onclick="App.navigate('create')">➕ Новая</button>
+                </div>
+            </header>
+            
+            <div class="page-content">
+                
+                <!-- ===== TASKS PAGE ===== -->
+                <section class="page-section active" id="page-tasks">
+                    <div style="display:flex;gap:0.75rem;margin-bottom:1.5rem;flex-wrap:wrap;align-items:flex-end;">
+                        <div class="form-group" style="flex:1;min-width:150px; margin-bottom:0">
+                            <label>Фильтр</label>
+                            <select id="task-filter-status" class="form-select">
+                                <option value="">Все задачи</option>
+                                <option value="pending">⏳ В процессе</option>
+                                <option value="completed">✅ Выполненные</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="flex:1;min-width:150px; margin-bottom:0">
+                            <label>Автор</label>
+                            <select id="task-filter-author" class="form-select">
+                                <option value="">Все авторы</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-ghost btn-sm" onclick="App.tasks.resetFilters()">🔄 Сбросить</button>
+                    </div>
+                    <div id="task-list" class="task-feed"></div>
+                    <div id="task-pagination" class="pagination"></div>
+                </section>
+                
+                <!-- ===== CREATE TASK PAGE ===== -->
+                <section class="page-section" id="page-create">
+                    <div class="create-task-bar" style="border-color:var(--accent-cyan)40;">
+                        <h3 style="margin-bottom:0.5rem;">➕ Создать новую задачу</h3>
+                        <form id="create-task-form" onsubmit="App.tasks.create(event)">
+                            <div class="form-group">
+                                <label>Заголовок <span style="color:var(--accent-pink);">*</span></label>
+                                <input type="text" id="create-title" class="form-input" required minlength="1" maxlength="100" placeholder="Что нужно сделать?">
+                                <span class="form-error">Заголовок должен быть от 1 до 100 символов</span>
+                            </div>
+                            <div class="form-group">
+                                <label>Описание</label>
+                                <textarea id="create-desc" class="form-textarea" maxlength="1000" placeholder="Подробности задачи (необязательно)"></textarea>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Автор <span style="color:var(--accent-pink);">*</span></label>
+                                    <select id="create-author" class="form-select" required><option value="">Выберите автора</option></select>
+                                </div>
+                                <div class="form-group" style="justify-content:flex-end;">
+                                    <label style="visibility:hidden;">Действие</label>
+                                    <button type="submit" class="btn btn-success btn-lg" style="width:100%;">✨ Создать задачу</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </section>
+                
+                <!-- ===== EDIT TASK PAGE ===== -->
+                <section class="page-section" id="page-edit">
+                    <div class="create-task-bar" style="border-color:var(--accent-orange)40;">
+                        <h3 style="margin-bottom:0.5rem;">✏️ Редактировать задачу</h3>
+                        <form id="edit-task-form" onsubmit="App.tasks.update(event)">
+                            <input type="hidden" id="edit-id">
+                            <div class="form-group">
+                                <label>Заголовок <span style="color:var(--accent-pink);">*</span></label>
+                                <input type="text" id="edit-title" class="form-input" required minlength="1" maxlength="100">
+                                <span class="form-error">Заголовок обязателен</span>
+                            </div>
+                            <div class="form-group">
+                                <label>Описание</label>
+                                <textarea id="edit-desc" class="form-textarea" maxlength="1000" placeholder="Подробности задачи"></textarea>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Статус</label>
+                                    <select id="edit-status" class="form-select">
+                                        <option value="false">⏳ В процессе</option>
+                                        <option value="true">✅ Выполнено</option>
+                                    </select>
+                                </div>
+                                <div class="form-group" style="justify-content:flex-end;">
+                                    <label style="visibility:hidden;">Действие</label>
+                                    <div style="display:flex;gap:0.5rem;">
+                                        <button type="button" class="btn btn-danger" onclick="App.tasks.deleteCurrent()">🗑️</button>
+                                        <button type="submit" class="btn btn-primary btn-lg">💾 Сохранить</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </section>
+                
+                <!-- ===== EDIT USER PAGE ===== -->
+                <section class="page-section" id="page-users-edit">
+                    <div class="create-task-bar" style="border-color:var(--accent-purple)40;">
+                        <h3 style="margin-bottom:0.5rem;">✏️ Редактировать пользователя</h3>
+                        <form id="edit-user-form" onsubmit="App.users.update(event)">
+                            <input type="hidden" id="edit-user-id">
+                            <div class="form-group">
+                                <label>Имя <span style="color:var(--accent-pink);">*</span></label>
+                                <input type="text" id="edit-user-name" class="form-input" required minlength="3" maxlength="100">
+                                <span class="form-error">Имя должно быть от 3 до 100 символов</span>
+                            </div>
+                            <div class="form-group">
+                                <label>Телефон</label>
+                                <input type="tel" id="edit-user-phone" class="form-input" maxlength="20">
+                            </div>
+                            <div style="display:flex;gap:0.5rem;justify-content:flex-end;margin-top:1rem;">
+                                <button type="button" class="btn btn-danger" onclick="App.users.delFromEdit()">🗑️ Удалить</button>
+                                <button type="button" class="btn btn-ghost" onclick="App.navigate('users')">Отмена</button>
+                                <button type="submit" class="btn btn-primary btn-lg">💾 Сохранить</button>
+                            </div>
+                        </form>
+                    </div>
+                </section>
+
+                <!-- ===== USERS PAGE ===== -->
+                <section class="page-section" id="page-users">
+                    <div class="create-task-bar" style="margin-bottom:1.5rem;">
+                        <h3 style="margin-bottom:0.5rem;">➕ Новый пользователь</h3>
+                        <form id="create-user-form" class="form-row" onsubmit="App.users.create(event)" style="margin-top:0.75rem;">
+                            <div class="form-group">
+                                <label>Имя <span style="color:var(--accent-pink);">*</span></label>
+                                <input type="text" id="user-name" class="form-input" required minlength="3" maxlength="100" placeholder="Иван Иванов">
+                                <span class="form-error">Имя: 3-100 символов</span>
+                            </div>
+                            <div class="form-group" style="justify-content:flex-end;">
+                                <label style="visibility:hidden;">Действие</label>
+                                <div style="display:flex;gap:0.5rem;">
+                                    <input type="tel" id="user-phone" class="form-input" placeholder="Телефон" style="width:180px;">
+                                    <button type="submit" class="btn btn-success">✨ Создать</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div id="user-list" class="user-list"></div>
+                    <div id="user-pagination" class="pagination"></div>
+                </section>
+                
+                <!-- ===== STATS PAGE ===== -->
+                <section class="page-section" id="page-stats">
+                    <div class="create-task-bar" style="margin-bottom:1.5rem;">
+                        <h3 style="margin-bottom:0.5rem;">📊 Фильтры статистики</h3>
+                        <div class="form-row" style="margin-top:0.75rem;">
+                            <div class="form-group">
+                                <label>Пользователь</label>
+                                <select id="stat-user" class="form-select"><option value="">Все</option></select>
+                            </div>
+                            <div class="form-group">
+                                <label>С даты</label>
+                                <input type="date" id="stat-from" class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label>По дату</label>
+                                <input type="date" id="stat-to" class="form-input">
+                            </div>
+                            <div class="form-group" style="justify-content:flex-end;">
+                                <label style="visibility:hidden;">Действие</label>
+                                <button class="btn btn-primary" onclick="App.stats.load()">📈 Показать</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stats-grid">
+                        <div class="stat-card"><div class="stat-icon">📝</div><div class="stat-value" id="stat-created">0</div><div class="stat-label">Создано задач</div></div>
+                        <div class="stat-card"><div class="stat-icon">✅</div><div class="stat-value" id="stat-completed">0</div><div class="stat-label">Выполнено</div></div>
+                        <div class="stat-card"><div class="stat-icon">📈</div><div class="stat-value" id="stat-rate">0%</div><div class="stat-label">Прогресс</div><div class="progress-bar"><div class="progress-fill" id="stat-rate-bar" style="width:0%"></div></div></div>
+                        <div class="stat-card"><div class="stat-icon">⏱️</div><div class="stat-value" id="stat-avg">—</div><div class="stat-label">Среднее время</div></div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+    
+    <div id="toast-container"></div>
+    
+    <script>
+        'use strict';
+        
+        const $ = s => document.querySelector(s);
+        const $$ = s => document.querySelectorAll(s);
+        const delay = ms => new Promise(r => setTimeout(r, ms));
+        const escape = s => { const d = document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; };
+        const fmtDate = iso => { if (!iso || iso === 'null') return '—'; try { return new Date(iso).toLocaleDateString('ru-RU', { year: 'numeric', month: 'short', day: 'numeric' }); } catch { return iso; } };
+        const fmtDateTime = iso => { if (!iso || iso === 'null') return '—'; try { return new Date(iso).toLocaleDateString('ru-RU', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }); } catch { return iso; } };
+        const fmtDur = ns => { if (!ns || ns === '0') return '—'; const ms = Math.round(Number(ns) / 1e6); if (ms < 1000) return ms + ' мс'; const s = Math.round(ms / 1000); if (s < 60) return s + ' с'; const m = Math.round(s / 60); return m < 60 ? m + ' мин' : Math.round(m / 60) + ' ч'; };
+        const initials = name => (name || '??').split(/\s+/).map(p => p[0]).filter(Boolean).slice(0, 2).join('').toUpperCase();
+        const debounce = (fn, wait = 300) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), wait); }; };
+        
+        class API {
+            static base = 'http://127.0.0.1:5050/api/v1';
+            static async req(ep, opts = {}, retry = 0) {
+                const url = `${this.base}${ep}`;
+                const ctrl = new AbortController();
+                const tid = setTimeout(() => ctrl.abort(), 12000);
+                try {
+                    const res = await fetch(url, { headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', ...opts.headers }, signal: ctrl.signal, ...opts });
+                    clearTimeout(tid);
+                    if (!res.ok) {
+                        let err = {}; try { err = await res.json(); } catch { err = { message: `HTTP ${res.status}` }; }
+                        const e = new Error(err.message || `HTTP ${res.status}`); e.status = res.status;
+                        if (res.status >= 500 && retry < 2) { await delay(500 * (retry + 1)); return this.req(ep, opts, retry + 1); }
+                        throw e;
+                    }
+                    return res.status === 204 ? null : await res.json();
+                } catch (err) {
+                    clearTimeout(tid);
+                    if (err.name === 'AbortError') throw new Error('Превышено время ожидания сервера');
+                    if (err.message.includes('Failed to fetch')) throw new Error('Нет соединения с сервером. Запущен ли backend?');
+                    if (err instanceof Error && err.status) throw err;
+                    throw new Error(err.message || 'Неизвестная ошибка');
+                }
+            }
+            static get(ep, params = {}) { const q = new URLSearchParams(params).toString(); return this.req(q ? `${ep}?${q}` : ep, { method: 'GET' }); }
+            static post(ep, body) { return this.req(ep, { method: 'POST', body: JSON.stringify(body) }); }
+            
+            // 🔥 PATCH: отправляем ПРЯМЫЕ значения для Nullable pattern
+            static patch(ep, fields) {
+                const body = {};
+                for (const [k, v] of Object.entries(fields)) {
+                    if (v !== undefined) body[k] = v;
+                }
+                return this.req(ep, { method: 'PATCH', body: JSON.stringify(body) });
+            }
+            
+            static delete(ep) { return this.req(ep, { method: 'DELETE' }); }
+        }
+        
+        class Toast {
+            static container = null;
+            static init() { this.container = $('#toast-container'); }
+            static show(msg, type = 'info', duration = 3000) {
+                if (!this.container) this.init();
+                const icons = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️' };
+                const titles = { success: 'Успех', error: 'Ошибка', warning: 'Внимание', info: 'Информация' };
+                const t = document.createElement('div');
+                t.className = `toast ${type}`;
+                t.innerHTML = `<span class="toast-icon">${icons[type]}</span><div class="toast-content"><div class="toast-title">${titles[type]}</div><div class="toast-message">${escape(msg)}</div></div>`;
+                this.container.appendChild(t);
+                requestAnimationFrame(() => t.classList.add('show'));
+                setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, duration);
+            }
+        }
+        
+        class Paginator {
+            constructor(containerId, onPageChange, limit = 10) {
+                this.el = $(`#${containerId}`);
+                this.onChange = onPageChange;
+                this.page = 1;
+                this.limit = limit;
+                this.total = 0;
+                if (this.el) {
+                    this.el.addEventListener('click', e => {
+                        const btn = e.target.closest('.page-btn');
+                        if (!btn || btn.disabled) return;
+                        const act = btn.dataset.action, p = +btn.dataset.page;
+                        if (act === 'prev') this.go(this.page - 1);
+                        else if (act === 'next') this.go(this.page + 1);
+                        else if (!isNaN(p)) this.go(p);
+                    });
+                }
+            }
+            get offset() { return (this.page - 1) * this.limit; }
+            get pages() { return Math.ceil(this.total / this.limit) || 1; }
+            update(total, limit) { this.total = Math.max(0, total); if (limit) this.limit = limit; if (this.page > this.pages) this.page = this.pages; this.render(); }
+            go(p) { const np = Math.max(1, Math.min(p, this.pages)); if (np === this.page) return; this.page = np; this.render(); this.onChange(this.offset, this.limit); }
+            render() {
+                if (!this.el || this.pages <= 1) { this.el.innerHTML = ''; return; }
+                const { page, pages } = this;
+                const range = []; range.push(1);
+                if (page > 3) range.push('...');
+                for (let i = Math.max(2, page - 2); i <= Math.min(pages - 1, page + 2); i++) range.push(i);
+                if (page < pages - 2) range.push('...');
+                if (pages > 1) range.push(pages);
+                let html = `<button class="page-btn" data-action="prev" ${page === 1 ? 'disabled' : ''}>‹</button>`;
+                range.forEach(r => { html += r === '...' ? `<span class="page-info">…</span>` : `<button class="page-btn ${r === page ? 'active' : ''}" data-page="${r}">${r}</button>`; });
+                html += `<button class="page-btn" data-action="next" ${page === pages ? 'disabled' : ''}>›</button><span class="page-info">${page} / ${pages}</span>`;
+                this.el.innerHTML = html;
+            }
+        }
+        
+        class UsersModule {
+            static pag = null; static cache = []; static loading = false;
+            
+            static init() {
+                this.pag = new Paginator('user-pagination', (o, l) => this.load(o, l), 10);
+                this.load();
+            }
+            
+            static async load(offset = 0, limit = 10) {
+                if (this.loading) return; this.loading = true;
+                const c = $('#user-list');
+                if (!c) { this.loading = false; return; }
+                if (!c.querySelector('.user-card')) c.innerHTML = '<div class="loading"><div class="loading-spinner"></div>Загрузка...</div>';
+                try {
+                    const data = await API.get('/users', { limit, offset });
+                    if (!Array.isArray(data)) throw new Error('Неверный формат');
+                    this.cache = data;
+                    this.render(data);
+                    this.pag?.update(data.length + offset, limit);
+                    this.updateSelects();
+                } catch (e) {
+                    c.innerHTML = `<div class="empty-state"><div class="icon">🔌</div><h3>Ошибка</h3><p>${escape(e.message)}</p></div>`;
+                    Toast.show(e.message, 'error');
+                } finally { this.loading = false; }
+            }
+            
+            static render(list) {
+                const c = $('#user-list');
+                if (!c) return;
+                if (!Array.isArray(list) || !list.length) { c.innerHTML = '<div class="empty-state"><div class="icon">👥</div><h3>Нет пользователей</h3><p>Создайте первого</p></div>'; return; }
+                c.innerHTML = list.map((u, i) => {
+                    const id = u?.id ?? '—', fn = escape(u?.full_name ?? 'Без имени'), ph = u?.phone_number ? escape(u.phone_number) : null, v = u?.version ?? 0;
+                    return `<div class="user-card" style="animation-delay:${i * 50}ms">
+                        <div class="user-avatar">${initials(u?.full_name)}</div>
+                        <div class="user-info">
+                            <div class="user-name">${fn}</div>
+                            <div class="user-phone">${ph ? '📞 ' + ph : 'Нет телефона'}</div>
+                            <div class="user-id">ID: ${id} • v${v}</div>
+                        </div>
+                        <div style="display:flex;gap:0.3rem;">
+                            <button class="action-btn" onclick="App.users.edit(${id})" title="Редактировать">✏️</button>
+                            <button class="action-btn delete" onclick="App.users.del(${id},'${fn}')" title="Удалить">🗑️</button>
+                        </div>
+                    </div>`;
+                }).join('');
+            }
+            
+            static async create(e) {
+                e.preventDefault();
+                const ni = $('#user-name'), pi = $('#user-phone');
+                if (!ni) return;
+                if (ni.value.trim().length < 3) { ni.classList.add('error'); Toast.show('Имя от 3 символов', 'error'); return; }
+                ni.classList.remove('error');
+                try {
+                    await API.post('/users', { full_name: ni.value.trim(), phone_number: pi.value.trim() || null });
+                    Toast.show('Пользователь создан', 'success');
+                    e.target.reset();
+                    this.load(this.pag?.offset || 0, this.pag?.limit || 10);
+                } catch (err) { Toast.show(err.message, 'error'); }
+            }
+            
+            // 🔥 Редактирование: теперь полноценное!
+            static edit(id) {
+                const u = this.cache.find(x => x?.id === id);
+                if (!u) return;
+                $('#edit-user-id').value = u.id;
+                $('#edit-user-name').value = u.full_name || '';
+                $('#edit-user-phone').value = u.phone_number || '';
+                App.navigate('users-edit');
+            }
+            
+            static async update(e) {
+                e.preventDefault();
+                const id = $('#edit-user-id')?.value;
+                const name = $('#edit-user-name')?.value?.trim();
+                const phone = $('#edit-user-phone')?.value?.trim();
+                
+                if (!name || name.length < 3) {
+                    $('#edit-user-name').classList.add('error');
+                    Toast.show('Имя должно быть от 3 символов', 'error');
+                    return;
+                }
+                
+                try {
+                    await API.patch(`/users/${id}`, { full_name: name, phone_number: phone || null });
+                    Toast.show('Пользователь обновлен', 'success');
+                    App.navigate('users');
+                    this.load();
+                } catch (err) { Toast.show(err.message, 'error'); }
+            }
+            
+            static delFromEdit() {
+                const id = $('#edit-user-id')?.value;
+                if (!id) return;
+                const u = this.cache.find(x => x?.id == id);
+                if (u) this.del(id, u.full_name);
+            }
+            
+            static async del(id, name) {
+                try {
+                    await API.delete(`/users/${id}`);
+                    Toast.show('Пользователь удалён', 'success');
+                    // Если мы в режиме редактирования, возвращаемся назад
+                    if (App.currentPage === 'users-edit') App.navigate('users');
+                    this.load(this.pag?.offset || 0, this.pag?.limit || 10);
+                } catch (e) {
+                    if (e.message.toLowerCase().includes('foreign key')) Toast.show('Нельзя удалить: у пользователя есть задачи!', 'error');
+                    else Toast.show(e.message, 'error');
+                }
+            }
+            
+            static updateSelects() {
+                const selects = ['sidebar-user-select', 'create-author', 'task-filter-author', 'stat-user'];
+                selects.forEach(sid => {
+                    const sel = $(`#${sid}`);
+                    if (!sel) return;
+                    const cur = sel.value;
+                    const firstOpt = sel.options[0]?.text || 'Все';
+                    sel.innerHTML = `<option value="">${escape(firstOpt)}</option>`;
+                    (this.cache || []).filter(u => u?.id && u?.full_name).forEach(u => {
+                        sel.innerHTML += `<option value="${u.id}">${escape(u.full_name)} (#${u.id})</option>`;
+                    });
+                    if (cur && [...sel.options].some(o => o.value === cur)) sel.value = cur;
+                });
+            }
+        }
+        
+        class TasksModule {
+            static pag = null; static cache = []; static loading = false; static filters = { status: '', author: '' };
+            
+            static init() {
+                this.pag = new Paginator('task-pagination', (o, l) => this.load(o, l), 10);
+                const statusEl = $('#task-filter-status'), authorEl = $('#task-filter-author');
+                if (statusEl) statusEl.addEventListener('change', () => { this.filters.status = statusEl.value; this.load(0); });
+                if (authorEl) authorEl.addEventListener('change', () => { this.filters.author = authorEl.value; this.load(0); });
+                const searchEl = $('#global-search');
+                if (searchEl) {
+                    searchEl.addEventListener('input', debounce(() => {
+                        const q = searchEl.value.toLowerCase().trim();
+                        if (!q) { this.load(this.pag?.offset || 0, this.pag?.limit || 10); return; }
+                        const filtered = (this.cache || []).filter(t => {
+                            if (!t) return false; return (t.title || '').toLowerCase().includes(q) || (t.description || '').toLowerCase().includes(q);
+                        });
+                        this.render(filtered); this.pag?.update(filtered.length, this.pag?.limit || 10);
+                    }, 300));
+                }
+                this.load();
+            }
+            
+            static async load(offset = 0, limit = 10) {
+                if (this.loading) return; this.loading = true;
+                const c = $('#task-list'); if (!c) { this.loading = false; return; }
+                if (!c.querySelector('.task-card')) c.innerHTML = '<div class="loading"><div class="loading-spinner"></div>Загрузка...</div>';
+                try {
+                    const params = { limit, offset };
+                    if (this.filters.author) params.user_id = this.filters.author;
+                    const data = await API.get('/tasks', params);
+                    if (!Array.isArray(data)) throw new Error('Неверный формат');
+                    this.cache = data;
+                    const filtered = this.applyFilters(data);
+                    this.render(filtered);
+                    this.pag?.update(filtered.length + offset, limit);
+                    const badge = $('#nav-task-count'); if (badge) badge.textContent = filtered.length;
+                } catch (e) {
+                    c.innerHTML = `<div class="empty-state"><div class="icon">🔌</div><h3>Ошибка</h3><p>${escape(e.message)}</p></div>`;
+                    Toast.show(e.message, 'error');
+                } finally { this.loading = false; }
+            }
+            
+            static applyFilters(list) { if (!Array.isArray(list)) return []; let r = [...list]; if (this.filters.status === 'pending') r = r.filter(t => !t?.completed); if (this.filters.status === 'completed') r = r.filter(t => t?.completed); return r; }
+            
+            static render(list) {
+                const c = $('#task-list'); if (!c) return;
+                if (!Array.isArray(list) || !list.length) {
+                    const hasFilter = this.filters.status || this.filters.author;
+                    c.innerHTML = `<div class="empty-state"><div class="icon">${hasFilter ? '🔍' : '📝'}</div><h3>${hasFilter ? 'Задач не найдено' : 'Задач пока нет'}</h3><p>${hasFilter ? 'Сбросьте фильтры' : 'Создайте первую'}</p></div>`;
+                    return;
+                }
+                c.innerHTML = list.map((t, i) => {
+                    const id = t?.id ?? '—', title = escape(t?.title ?? 'Без названия'), desc = t?.description ? escape(t.description) : null;
+                    const cp = t?.completed ?? false, ca = fmtDate(t?.created_at), cpa = fmtDateTime(t?.completed_at);
+                    const aid = t?.author_user_id, author = UsersModule.cache?.find(u => u?.id === aid)?.full_name || `ID:${aid}`;
+                    return `<div class="task-card ${cp ? 'completed' : ''}" style="animation-delay:${i * 50}ms">
+                        <div class="task-header">
+                            <div class="task-checkbox"><input type="checkbox" id="cb-${id}" ${cp ? 'checked' : ''} onchange="App.tasks.toggleDone(${id}, this.checked)"><label for="cb-${id}"></label></div>
+                            <div class="task-body" onclick="App.tasks.openEdit(${id})" style="cursor:pointer;">
+                                <div class="task-title">${title}</div>
+                                ${desc ? `<div class="task-description">${desc}</div>` : ''}
+                                <div class="task-meta">
+                                    <span class="task-status-badge ${cp ? 'done' : 'pending'}">${cp ? 'Выполнено' : 'В процессе'}</span>
+                                    <span>👤 ${escape(author)}</span> <span>📅 ${ca}</span>
+                                    ${cp && cpa !== '—' ? `<span>✅ ${cpa}</span>` : ''}
+                                </div>
+                            </div>
+                            <div class="task-actions">
+                                <button class="action-btn" onclick="App.tasks.openEdit(${id})" title="Редактировать">✏️</button>
+                                <button class="action-btn delete" onclick="App.tasks.del(${id})" title="Удалить">🗑️</button>
+                            </div>
+                        </div>
+                    </div>`;
+                }).join('');
+            }
+            
+            static async create(e) {
+                e.preventDefault();
+                const title = $('#create-title')?.value?.trim(), desc = $('#create-desc')?.value?.trim(), author = +$('#create-author')?.value;
+                if (!title || title.length < 1) { $('#create-title')?.classList.add('error'); Toast.show('Заголовок обязателен', 'error'); return; }
+                $('#create-title')?.classList.remove('error');
+                if (!author || isNaN(author)) { Toast.show('Выберите автора', 'error'); return; }
+                try {
+                    await API.post('/tasks', { title, description: desc || null, completed: false, author_user_id: author });
+                    Toast.show('Задача создана', 'success');
+                    e.target.reset();
+                    App.navigate('tasks'); this.load();
+                } catch (err) { Toast.show(err.message, 'error'); }
+            }
+            
+            static openEdit(id) {
+                const task = this.cache?.find(t => t?.id === id); if (!task) return;
+                $('#edit-id').value = id; $('#edit-title').value = task.title || '';
+                $('#edit-desc').value = task.description || ''; $('#edit-status').value = task.completed ? 'true' : 'false';
+                App.navigate('edit');
+            }
+            
+            static async update(e) {
+                e.preventDefault();
+                const id = $('#edit-id')?.value, title = $('#edit-title')?.value?.trim(), desc = $('#edit-desc')?.value?.trim();
+                const completed = $('#edit-status')?.value === 'true';
+                if (!id || !title) { Toast.show('Ошибка: нет ID или заголовка', 'error'); return; }
+                try {
+                    const description = desc === '' ? null : (desc || undefined);
+                    await API.patch(`/tasks/${id}`, { title, description, completed });
+                    Toast.show('Задача обновлена', 'success');
+                    App.navigate('tasks'); this.load(this.pag?.offset || 0, this.pag?.limit || 10);
+                } catch (err) { Toast.show(err.message, 'error'); }
+            }
+            
+            static async toggleDone(id, checked) {
+                try { await API.patch(`/tasks/${id}`, { completed: checked }); Toast.show(checked ? 'Задача выполнена ✅' : 'Задача возвращена ⏳', 'success', 1500); this.load(this.pag?.offset || 0, this.pag?.limit || 10); }
+                catch (err) { Toast.show(err.message, 'error'); }
+            }
+            
+            static async del(id) {
+                if (!id || id === 'undefined') { Toast.show('Ошибка: неверный ID', 'error'); return; }
+                const task = this.cache?.find(t => t?.id === id); const name = task?.title ? `"${escape(task.title)}"` : 'эту задачу';
+                if (!confirm(`Удалить задачу ${name}?`)) return;
+                try { await API.delete(`/tasks/${id}`); Toast.show('Задача удалена', 'success'); this.load(this.pag?.offset || 0, this.pag?.limit || 10); }
+                catch (e) { Toast.show(e.message, 'error'); }
+            }
+            
+            static deleteCurrent() { const id = $('#edit-id')?.value; if (!id) return; if (confirm('Удалить эту задачу?')) this.del(id); }
+            static resetFilters() { this.filters = { status: '', author: '' }; const s = $('#task-filter-status'), a = $('#task-filter-author'); if (s) s.value = ''; if (a) a.value = ''; this.load(0); }
+        }
+        
+        class StatsModule {
+            static loading = false;
+            static init() { UsersModule.updateSelects(); }
+            static async load() {
+                if (this.loading) return; this.loading = true;
+                const uid = $('#stat-user')?.value || '', fr = $('#stat-from')?.value || '', to = $('#stat-to')?.value || '';
+                try {
+                    const params = {}; if (uid) params.user_id = uid; if (fr) params.from = fr; if (to) params.to = to;
+                    const s = await API.get('/statistics', params);
+                    $('#stat-created').textContent = s?.tasks_created ?? 0;
+                    $('#stat-completed').textContent = s?.tasks_completed ?? 0;
+                    const rt = s?.tasks_completed_rate ?? 0;
+                    $('#stat-rate').textContent = `${Math.round(rt)}%`;
+                    $('#stat-rate-bar').style.width = `${Math.min(100, Math.max(0, rt))}%`;
+                    $('#stat-avg').textContent = fmtDur(s?.tasks_average_completion_time);
+                    Toast.show('Статистика обновлена', 'success');
+                } catch (e) { Toast.show(e.message, 'error'); }
+                finally { this.loading = false; }
+            }
+        }
+        
+        const App = {
+            currentPage: 'tasks',
+            init() {
+                const saved = localStorage.getItem('neon-theme');
+                if (saved) { document.documentElement.setAttribute('data-theme', saved); const btn = document.querySelector('.theme-btn'); if (btn) btn.textContent = saved === 'dark' ? '🌙' : '☀️'; }
+                this.updateConnection();
+                window.addEventListener('online', () => this.updateConnection());
+                window.addEventListener('offline', () => this.updateConnection());
+                Toast.init(); UsersModule.init(); TasksModule.init(); StatsModule.init();
+                document.addEventListener('keydown', e => {
+                    if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) return;
+                    if (e.key === 'n' && !e.ctrlKey) { e.preventDefault(); this.navigate('create'); }
+                    if (e.key === 'Escape') {
+                        if (this.currentPage === 'edit') this.navigate('tasks');
+                        if (this.currentPage === 'users-edit') this.navigate('users');
+                    }
+                });
+                console.log('⚡ NEON TODO v5.1 initialized');
+            },
+            navigate(page) {
+                this.currentPage = page;
+                $$('.nav-item').forEach(item => {
+                    const isUserEdit = (page === 'users-edit' && item.dataset.page === 'users');
+                    item.classList.toggle('active', item.dataset.page === page || isUserEdit);
+                });
+                $$('.page-section').forEach(sec => sec.classList.remove('active'));
+                const target = $(`#page-${page}`);
+                if (target) target.classList.add('active');
+                const titles = { tasks: '📝 Задачи', create: '➕ Создать задачу', edit: '✏️ Редактировать', users: '👥 Пользователи', 'users-edit': '✏️ Редактировать пользователя', stats: '📊 Статистика' };
+                const titleEl = $('#page-title');
+                if (titleEl) titleEl.textContent = titles[page] || 'NEON TODO';
+                if (page === 'tasks') TasksModule.load(TasksModule.pag?.offset || 0, TasksModule.pag?.limit || 10);
+                if (page === 'users') UsersModule.load(UsersModule.pag?.offset || 0, UsersModule.pag?.limit || 10);
+                this.closeSidebar();
+            },
+            toggleTheme() {
+                const html = document.documentElement, cur = html.getAttribute('data-theme'), next = cur === 'light' ? 'dark' : 'light';
+                html.setAttribute('data-theme', next); localStorage.setItem('neon-theme', next);
+                const btn = document.querySelector('.theme-btn'); if (btn) btn.textContent = next === 'dark' ? '🌙' : '☀️';
+                Toast.show(`Тема: ${next === 'dark' ? 'тёмная' : 'светлая'}`, 'info', 1500);
+            },
+            toggleSidebar() { const s = $('#sidebar'), o = $('#mobile-overlay'); if (s) s.classList.toggle('open'); if (o) o.classList.toggle('show'); },
+            closeSidebar() { const s = $('#sidebar'), o = $('#mobile-overlay'); if (s) s.classList.remove('open'); if (o) o.classList.remove('show'); },
+            updateConnection() { const d = $('#status-dot'), t = $('#status-text'); if (d) d.className = 'status-dot' + (navigator.onLine ? '' : ' offline'); if (t) t.textContent = navigator.onLine ? 'Онлайн' : 'Офлайн'; },
+            tasks: TasksModule, users: UsersModule, stats: StatsModule
+        };
+        
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => App.init());
+        else App.init();
+        window.addEventListener('error', e => console.error('Global:', e.error || e.message));
+        window.addEventListener('unhandledrejection', e => console.error('Unhandled:', e.reason));
+    </script>
+</body>
+</html>
+
