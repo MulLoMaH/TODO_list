@@ -23,6 +23,9 @@ import (
 	user_postgres_repository "github.com/MulLoMaH/TODO_list.git/internal/features/users/repository/postgres"
 	user_service "github.com/MulLoMaH/TODO_list.git/internal/features/users/service"
 	user_transport_http "github.com/MulLoMaH/TODO_list.git/internal/features/users/transport/http"
+	web_fs_repository "github.com/MulLoMaH/TODO_list.git/internal/features/web/repository/html/file_system"
+	web_service "github.com/MulLoMaH/TODO_list.git/internal/features/web/service"
+	web_transport_http "github.com/MulLoMaH/TODO_list.git/internal/features/web/transport/http"
 	"go.uber.org/zap"
 
 	_ "github.com/MulLoMaH/TODO_list.git/docs"
@@ -82,6 +85,11 @@ func main() {
 	statisticsService := statistics_service.NewStatisticsService(statisticsRepository)
 	statisticsTransportHTTP := statistics_transport_http.NewStatisticsHTTPHandler(statisticsService)
 
+	logger.Debug("initializing feature", zap.String("feature", "web"))
+	webRepoitory := web_fs_repository.NewWebRepoitory()
+	webService := web_service.NewWebService(webRepoitory)
+	webTransportHTTP := web_transport_http.NewWebHTTPHandler(webService)
+
 	logger.Debug("initializing HTTP server")
 	httpServer := core_HTTP_server.NewHTTPServer(
 		logger,
@@ -98,6 +106,7 @@ func main() {
 	apiVersionRouterV1.RegisterRoutes(statisticsTransportHTTP.Routes()...)
 
 	httpServer.RegisterAPIRouters(apiVersionRouterV1)
+	httpServer.RegisterRoutes(webTransportHTTP.Routes()...)
 	httpServer.RegisterSwagger()
 
 	if err := httpServer.Run(ctx); err != nil {
