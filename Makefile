@@ -95,7 +95,8 @@ logs-cleanup:
 #операция по запуску приложения
 todoapp_run:
 	@export LOGGER_FOLDER="${PROJECT_ROOT}/out/logs" && \
-	export POSTGRES_HOST=localhost && \
+	export POSTGRES_HOST=127.0.0.1 && \
+	export POSTGRES_PORT=5432 && \
 	go mod tidy && \
 	go run ${PROJECT_ROOT}/cmd/todoapp/main.go
 
